@@ -30,6 +30,7 @@ import (
 
 	"github.com/pborman/uuid"
 	"github.com/uber-common/bark"
+	"github.com/uber-go/tally"
 	"github.com/uber/cadence/.gen/go/cadence/workflowserviceserver"
 	"github.com/uber/cadence/.gen/go/health"
 	"github.com/uber/cadence/.gen/go/health/metaserver"
@@ -2916,7 +2917,7 @@ func (wh *WorkflowHandler) getLoggerForTask(taskToken []byte) bark.Logger {
 }
 
 // startRequestProfile initiates recording of request metrics
-func (wh *WorkflowHandler) startRequestProfile(scope int) metrics.Stopwatch {
+func (wh *WorkflowHandler) startRequestProfile(scope int) tally.Stopwatch {
 	wh.startWG.Wait()
 	sw := wh.metricsClient.StartTimer(scope, metrics.CadenceLatency)
 	wh.metricsClient.IncCounter(scope, metrics.CadenceRequests)

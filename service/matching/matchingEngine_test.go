@@ -875,8 +875,8 @@ func (s *matchingEngineSuite) concurrentPublishConsumeActivities(
 	s.True(expectedRange <= s.taskManager.getTaskListManager(tlID).rangeID)
 	s.EqualValues(0, s.taskManager.getTaskCount(tlID))
 
-	syncCtr := scope.Snapshot().Counters()["test.sync.throttle.count+operation=TaskListMgr"]
-	bufCtr := scope.Snapshot().Counters()["test.buffer.throttle.count+operation=TaskListMgr"]
+	syncCtr := scope.Snapshot().Counters()["test.sync_throttle_count+operation=TaskListMgr"]
+	bufCtr := scope.Snapshot().Counters()["test.buffer_throttle_count+operation=TaskListMgr"]
 	total := int64(0)
 	if syncCtr != nil {
 		total += syncCtr.Value()

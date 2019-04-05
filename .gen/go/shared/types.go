@@ -38751,6 +38751,7 @@ type StartWorkflowExecutionRequest struct {
 	ChildPolicy                         *ChildPolicy           `json:"childPolicy,omitempty"`
 	RetryPolicy                         *RetryPolicy           `json:"retryPolicy,omitempty"`
 	CronSchedule                        *string                `json:"cronSchedule,omitempty"`
+	Memo                                map[string][]byte      `json:"memo,omitempty"`
 }
 
 // ToWire translates a StartWorkflowExecutionRequest struct into a Thrift-level intermediate
@@ -38770,7 +38771,7 @@ type StartWorkflowExecutionRequest struct {
 //   }
 func (v *StartWorkflowExecutionRequest) ToWire() (wire.Value, error) {
 	var (
-		fields [13]wire.Field
+		fields [14]wire.Field
 		i      int = 0
 		w      wire.Value
 		err    error
@@ -38878,6 +38879,14 @@ func (v *StartWorkflowExecutionRequest) ToWire() (wire.Value, error) {
 			return w, err
 		}
 		fields[i] = wire.Field{ID: 130, Value: w}
+		i++
+	}
+	if v.Memo != nil {
+		w, err = wire.NewValueMap(_Map_String_Binary_MapItemList(v.Memo)), error(nil)
+		if err != nil {
+			return w, err
+		}
+		fields[i] = wire.Field{ID: 140, Value: w}
 		i++
 	}
 
@@ -39028,6 +39037,14 @@ func (v *StartWorkflowExecutionRequest) FromWire(w wire.Value) error {
 				}
 
 			}
+		case 140:
+			if field.Value.Type() == wire.TMap {
+				v.Memo, err = _Map_String_Binary_Read(field.Value.GetMap())
+				if err != nil {
+					return err
+				}
+
+			}
 		}
 	}
 
@@ -39041,7 +39058,7 @@ func (v *StartWorkflowExecutionRequest) String() string {
 		return "<nil>"
 	}
 
-	var fields [13]string
+	var fields [14]string
 	i := 0
 	if v.Domain != nil {
 		fields[i] = fmt.Sprintf("Domain: %v", *(v.Domain))
@@ -39093,6 +39110,10 @@ func (v *StartWorkflowExecutionRequest) String() string {
 	}
 	if v.CronSchedule != nil {
 		fields[i] = fmt.Sprintf("CronSchedule: %v", *(v.CronSchedule))
+		i++
+	}
+	if v.Memo != nil {
+		fields[i] = fmt.Sprintf("Memo: %v", v.Memo)
 		i++
 	}
 
@@ -39148,6 +39169,9 @@ func (v *StartWorkflowExecutionRequest) Equals(rhs *StartWorkflowExecutionReques
 	if !_String_EqualsPtr(v.CronSchedule, rhs.CronSchedule) {
 		return false
 	}
+	if !((v.Memo == nil && rhs.Memo == nil) || (v.Memo != nil && rhs.Memo != nil && _Map_String_Binary_Equals(v.Memo, rhs.Memo))) {
+		return false
+	}
 
 	return true
 }
@@ -39196,6 +39220,9 @@ func (v *StartWorkflowExecutionRequest) MarshalLogObject(enc zapcore.ObjectEncod
 	}
 	if v.CronSchedule != nil {
 		enc.AddString("cronSchedule", *v.CronSchedule)
+	}
+	if v.Memo != nil {
+		err = multierr.Append(err, enc.AddObject("memo", (_Map_String_Binary_Zapper)(v.Memo)))
 	}
 	return err
 }
@@ -39393,6 +39420,21 @@ func (v *StartWorkflowExecutionRequest) GetCronSchedule() (o string) {
 // IsSetCronSchedule returns true if CronSchedule is not nil.
 func (v *StartWorkflowExecutionRequest) IsSetCronSchedule() bool {
 	return v != nil && v.CronSchedule != nil
+}
+
+// GetMemo returns the value of Memo if it is set or its
+// zero value if it is unset.
+func (v *StartWorkflowExecutionRequest) GetMemo() (o map[string][]byte) {
+	if v != nil && v.Memo != nil {
+		return v.Memo
+	}
+
+	return
+}
+
+// IsSetMemo returns true if Memo is not nil.
+func (v *StartWorkflowExecutionRequest) IsSetMemo() bool {
+	return v != nil && v.Memo != nil
 }
 
 type StartWorkflowExecutionResponse struct {
@@ -46334,6 +46376,7 @@ type WorkflowExecutionStartedEventAttributes struct {
 	ExpirationTimestamp                 *int64                  `json:"expirationTimestamp,omitempty"`
 	CronSchedule                        *string                 `json:"cronSchedule,omitempty"`
 	FirstDecisionTaskBackoffSeconds     *int32                  `json:"firstDecisionTaskBackoffSeconds,omitempty"`
+	Memo                                map[string][]byte       `json:"memo,omitempty"`
 }
 
 // ToWire translates a WorkflowExecutionStartedEventAttributes struct into a Thrift-level intermediate
@@ -46353,7 +46396,7 @@ type WorkflowExecutionStartedEventAttributes struct {
 //   }
 func (v *WorkflowExecutionStartedEventAttributes) ToWire() (wire.Value, error) {
 	var (
-		fields [20]wire.Field
+		fields [21]wire.Field
 		i      int = 0
 		w      wire.Value
 		err    error
@@ -46517,6 +46560,14 @@ func (v *WorkflowExecutionStartedEventAttributes) ToWire() (wire.Value, error) {
 			return w, err
 		}
 		fields[i] = wire.Field{ID: 110, Value: w}
+		i++
+	}
+	if v.Memo != nil {
+		w, err = wire.NewValueMap(_Map_String_Binary_MapItemList(v.Memo)), error(nil)
+		if err != nil {
+			return w, err
+		}
+		fields[i] = wire.Field{ID: 120, Value: w}
 		i++
 	}
 
@@ -46731,6 +46782,14 @@ func (v *WorkflowExecutionStartedEventAttributes) FromWire(w wire.Value) error {
 				}
 
 			}
+		case 120:
+			if field.Value.Type() == wire.TMap {
+				v.Memo, err = _Map_String_Binary_Read(field.Value.GetMap())
+				if err != nil {
+					return err
+				}
+
+			}
 		}
 	}
 
@@ -46744,7 +46803,7 @@ func (v *WorkflowExecutionStartedEventAttributes) String() string {
 		return "<nil>"
 	}
 
-	var fields [20]string
+	var fields [21]string
 	i := 0
 	if v.WorkflowType != nil {
 		fields[i] = fmt.Sprintf("WorkflowType: %v", v.WorkflowType)
@@ -46826,6 +46885,10 @@ func (v *WorkflowExecutionStartedEventAttributes) String() string {
 		fields[i] = fmt.Sprintf("FirstDecisionTaskBackoffSeconds: %v", *(v.FirstDecisionTaskBackoffSeconds))
 		i++
 	}
+	if v.Memo != nil {
+		fields[i] = fmt.Sprintf("Memo: %v", v.Memo)
+		i++
+	}
 
 	return fmt.Sprintf("WorkflowExecutionStartedEventAttributes{%v}", strings.Join(fields[:i], ", "))
 }
@@ -46900,6 +46963,9 @@ func (v *WorkflowExecutionStartedEventAttributes) Equals(rhs *WorkflowExecutionS
 	if !_I32_EqualsPtr(v.FirstDecisionTaskBackoffSeconds, rhs.FirstDecisionTaskBackoffSeconds) {
 		return false
 	}
+	if !((v.Memo == nil && rhs.Memo == nil) || (v.Memo != nil && rhs.Memo != nil && _Map_String_Binary_Equals(v.Memo, rhs.Memo))) {
+		return false
+	}
 
 	return true
 }
@@ -46969,6 +47035,9 @@ func (v *WorkflowExecutionStartedEventAttributes) MarshalLogObject(enc zapcore.O
 	}
 	if v.FirstDecisionTaskBackoffSeconds != nil {
 		enc.AddInt32("firstDecisionTaskBackoffSeconds", *v.FirstDecisionTaskBackoffSeconds)
+	}
+	if v.Memo != nil {
+		err = multierr.Append(err, enc.AddObject("memo", (_Map_String_Binary_Zapper)(v.Memo)))
 	}
 	return err
 }
@@ -47271,6 +47340,21 @@ func (v *WorkflowExecutionStartedEventAttributes) GetFirstDecisionTaskBackoffSec
 // IsSetFirstDecisionTaskBackoffSeconds returns true if FirstDecisionTaskBackoffSeconds is not nil.
 func (v *WorkflowExecutionStartedEventAttributes) IsSetFirstDecisionTaskBackoffSeconds() bool {
 	return v != nil && v.FirstDecisionTaskBackoffSeconds != nil
+}
+
+// GetMemo returns the value of Memo if it is set or its
+// zero value if it is unset.
+func (v *WorkflowExecutionStartedEventAttributes) GetMemo() (o map[string][]byte) {
+	if v != nil && v.Memo != nil {
+		return v.Memo
+	}
+
+	return
+}
+
+// IsSetMemo returns true if Memo is not nil.
+func (v *WorkflowExecutionStartedEventAttributes) IsSetMemo() bool {
+	return v != nil && v.Memo != nil
 }
 
 type WorkflowExecutionTerminatedEventAttributes struct {

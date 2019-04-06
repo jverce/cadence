@@ -1231,6 +1231,9 @@ func FixLunaInBatch(c *cli.Context) {
 			RunId:      common.StringPtr(rid),
 		}
 	}
+
+	fmt.Println("sleep wait for all goroutines...")
+	time.Sleep(time.Second * 60 * 50)
 }
 
 // CompleteActivity completes an activity
@@ -1268,6 +1271,7 @@ func doFixLuna(c *cli.Context, domain, wid, rid string) error {
 		return nil
 	}
 	if resp.WorkflowExecutionInfo.CloseStatus == nil || resp.WorkflowExecutionInfo.CloseTime == nil {
+		fmt.Println("current run is open: ", wid, rid)
 		//skip and not terminate current if open
 		return nil
 		// terminate current

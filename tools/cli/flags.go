@@ -71,6 +71,7 @@ const (
 	FlagInputFile2                  = "input_file2"
 	FlagInputSeparator              = "input_separator"
 	FlagParallism                   = "input_parallism"
+	FlagSkipCurrent                 = "skip_current_open"
 	FlagInputTopic                  = "input_topic"
 	FlagInputTopicWithAlias         = FlagInputTopic + ", it"
 	FlagHostFile                    = "host_file"

@@ -20,7 +20,9 @@
 
 package cli
 
-import "github.com/urfave/cli"
+import (
+	"github.com/urfave/cli"
+)
 
 const (
 	// Version is the controlled version string. It should be updated every time
@@ -91,6 +93,10 @@ func NewCliApp() *cli.App {
 					Name:  FlagParallism,
 					Value: 1,
 					Usage: "batch in parallel",
+				},
+				cli.BoolFlag{
+					Name:  FlagSkipCurrent,
+					Usage: "skip current open",
 				},
 			},
 			Action: func(c *cli.Context) {

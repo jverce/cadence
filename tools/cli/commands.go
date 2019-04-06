@@ -1270,26 +1270,31 @@ func doFixLuna(c *cli.Context, domain, wid, rid string) error {
 		fmt.Println("current run is the reset run: ", wid, rid)
 		return nil
 	}
+
+	skipOpen := c.Bool(FlagSkipCurrent)
 	if resp.WorkflowExecutionInfo.CloseStatus == nil || resp.WorkflowExecutionInfo.CloseTime == nil {
-		fmt.Println("current run is open: ", wid, rid)
-		//skip and not terminate current if open
-		return nil
-		// terminate current
-		//err := frontendClient.TerminateWorkflowExecution(ctx, &shared.TerminateWorkflowExecutionRequest{
-		//	Domain: common.StringPtr(domain),
-		//	WorkflowExecution: &shared.WorkflowExecution{
-		//		WorkflowId: common.StringPtr(wid),
-		//		RunId:      common.StringPtr(currentRunID),
-		//	},
-		//	Reason:   common.StringPtr("fix bad deployment"),
-		//	Identity: common.StringPtr("longer"),
-		//})
-		//if err != nil {
-		//	return printErrorAndReturn("TerminateWorkflowExecution failed, need retry...", err)
-		//} else {
-		//	fmt.Println("terminate wid, rid,", wid, currentRunID)
-		//	time.Sleep(time.Second * 10)
-		//}
+		if skipOpen {
+			fmt.Println("current run is open: ", wid, rid)
+			//skip and not terminate current if open
+			return nil
+		} else {
+			// terminate current
+			err := frontendClient.TerminateWorkflowExecution(ctx, &shared.TerminateWorkflowExecutionRequest{
+				Domain: common.StringPtr(domain),
+				WorkflowExecution: &shared.WorkflowExecution{
+					WorkflowId: common.StringPtr(wid),
+					RunId:      common.StringPtr(currentRunID),
+				},
+				Reason:   common.StringPtr("fix bad deployment"),
+				Identity: common.StringPtr("longer"),
+			})
+			if err != nil {
+				return printErrorAndReturn("TerminateWorkflowExecution failed, need retry...", err)
+			} else {
+				fmt.Println("terminate wid, rid,", wid, currentRunID)
+				time.Sleep(time.Second * 10)
+			}
+		}
 	}
 
 	req := &shared.GetWorkflowExecutionHistoryRequest{

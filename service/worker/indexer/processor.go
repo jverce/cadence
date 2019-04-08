@@ -237,14 +237,14 @@ func (p *indexProcessor) addMessageToES(indexMsg *indexer.Message, kafkaMsg mess
 }
 
 func (p *indexProcessor) generateESDoc(msg *indexer.Message, keyToKafkaMsg string) map[string]interface{} {
-	doc := p.dumpFieldsToMap(msg.IndexAttributes.Fields)
+	doc := p.dumpFieldsToMap(msg.IndexedFields.Fields, msg.UnIndexedFields.Fields)
 	fulfillDoc(doc, msg, keyToKafkaMsg)
 	return doc
 }
 
-func (p *indexProcessor) dumpFieldsToMap(fields map[string]*indexer.Field) map[string]interface{} {
+func (p *indexProcessor) dumpFieldsToMap(indexedFields, unIndexedFields map[string]*indexer.Field) map[string]interface{} {
 	doc := make(map[string]interface{})
-	for k, v := range fields {
+	for k, v := range indexedFields {
 		if !es.IsFieldNameValid(k) {
 			p.logger.WithFields(bark.Fields{
 				logging.TagESField: k,
@@ -260,6 +260,16 @@ func (p *indexProcessor) dumpFieldsToMap(fields map[string]*indexer.Field) map[s
 			doc[k] = v.GetIntData()
 		case indexer.FieldTypeBool:
 			doc[k] = v.GetBoolData()
+		default:
+			// must be bug in code and bad deployment, check data sent from producer
+			p.logger.Fatalf("Unknown field type")
+		}
+	}
+	for k, v := range unIndexedFields {
+		// no need to check whether field is valid
+		switch v.GetType() {
+		case indexer.FieldTypeBinary:
+			doc[k] = v.GetBinaryData()
 		default:
 			// must be bug in code and bad deployment, check data sent from producer
 			p.logger.Fatalf("Unknown field type")

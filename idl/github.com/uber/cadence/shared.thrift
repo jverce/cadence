@@ -1131,6 +1131,7 @@ struct SignalWithStartWorkflowExecutionRequest {
   130: optional binary control
   140: optional RetryPolicy retryPolicy
   150: optional string cronSchedule
+  160: optional map<string,binary> memo
 }
 
 struct TerminateWorkflowExecutionRequest {

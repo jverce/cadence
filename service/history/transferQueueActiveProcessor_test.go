@@ -1555,6 +1555,9 @@ func (s *transferQueueActiveProcessorSuite) createRecordWorkflowExecutionStarted
 	executionInfo := msBuilder.GetExecutionInfo()
 	executionTimestamp := executionInfo.StartTimestamp.Add(time.Duration(backoffSeconds) * time.Second)
 
+	domainEntry, _ := s.mockShard.GetDomainCache().GetDomainByID(task.DomainID)
+	encoding := s.mockShard.GetEncoding(domainEntry)
+
 	return &persistence.RecordWorkflowExecutionStartedRequest{
 		DomainUUID:         task.DomainID,
 		Execution:          execution,
@@ -1562,6 +1565,7 @@ func (s *transferQueueActiveProcessorSuite) createRecordWorkflowExecutionStarted
 		StartTimestamp:     executionInfo.StartTimestamp.UnixNano(),
 		ExecutionTimestamp: executionTimestamp.UnixNano(),
 		WorkflowTimeout:    int64(executionInfo.WorkflowTimeout),
+		Encoding:           encoding,
 	}
 }
 

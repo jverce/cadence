@@ -55,7 +55,7 @@ type (
 		processors        []*replicationTaskProcessor
 		logger            bark.Logger
 		metricsClient     metrics.Client
-		historySerializer persistence.HistorySerializer
+		historySerializer persistence.CadenceSerializer
 	}
 
 	// Config contains all the replication config for worker
@@ -92,7 +92,7 @@ func NewReplicator(clusterMetadata cluster.Metadata, metadataManagerV2 persisten
 		client:            client,
 		logger:            logger,
 		metricsClient:     metricsClient,
-		historySerializer: persistence.NewHistorySerializer(),
+		historySerializer: persistence.NewCadenceSerializer(),
 	}
 }
 

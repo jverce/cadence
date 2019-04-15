@@ -144,7 +144,7 @@ func (s *integrationSuite) TestTerminateWorkflow() {
 	we, err0 := s.engine.StartWorkflowExecution(createContext(), request)
 	s.Nil(err0)
 
-	s.Logger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
+	s.BarkLogger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
 
 	activityCount := int32(1)
 	activityCounter := int32(0)
@@ -191,12 +191,12 @@ func (s *integrationSuite) TestTerminateWorkflow() {
 		Identity:        identity,
 		DecisionHandler: dtHandler,
 		ActivityHandler: atHandler,
-		Logger:          s.Logger,
+		Logger:          s.BarkLogger,
 		T:               s.T(),
 	}
 
 	_, err := poller.PollAndProcessDecisionTask(false, false)
-	s.Logger.Infof("PollAndProcessDecisionTask: %v", err)
+	s.BarkLogger.Infof("PollAndProcessDecisionTask: %v", err)
 	s.Nil(err)
 
 	terminateReason := "terminate reason."
@@ -225,11 +225,11 @@ GetHistoryLoop:
 		})
 		s.Nil(err)
 		history := historyResponse.History
-		common.PrettyPrintHistory(history, s.Logger)
+		common.PrettyPrintHistory(history, s.BarkLogger)
 
 		lastEvent := history.Events[len(history.Events)-1]
 		if *lastEvent.EventType != workflow.EventTypeWorkflowExecutionTerminated {
-			s.Logger.Warnf("Execution not terminated yet.")
+			s.BarkLogger.Warnf("Execution not terminated yet.")
 			time.Sleep(100 * time.Millisecond)
 			continue GetHistoryLoop
 		}
@@ -261,12 +261,12 @@ StartNewExecutionLoop:
 
 		newExecution, err := s.engine.StartWorkflowExecution(createContext(), request)
 		if err != nil {
-			s.Logger.Warnf("Start New Execution failed. Error: %v", err)
+			s.BarkLogger.Warnf("Start New Execution failed. Error: %v", err)
 			time.Sleep(100 * time.Millisecond)
 			continue StartNewExecutionLoop
 		}
 
-		s.Logger.Infof("New Execution Started with the same ID.  WorkflowID: %v, RunID: %v", id,
+		s.BarkLogger.Infof("New Execution Started with the same ID.  WorkflowID: %v, RunID: %v", id,
 			*newExecution.RunId)
 		newExecutionStarted = true
 		break StartNewExecutionLoop
@@ -303,7 +303,7 @@ func (s *integrationSuite) TestSequentialWorkflow() {
 	we, err0 := s.engine.StartWorkflowExecution(createContext(), request)
 	s.Nil(err0)
 
-	s.Logger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
+	s.BarkLogger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
 
 	workflowComplete := false
 	activityCount := int32(10)
@@ -362,20 +362,20 @@ func (s *integrationSuite) TestSequentialWorkflow() {
 		Identity:        identity,
 		DecisionHandler: dtHandler,
 		ActivityHandler: atHandler,
-		Logger:          s.Logger,
+		Logger:          s.BarkLogger,
 		T:               s.T(),
 	}
 
 	for i := 0; i < 10; i++ {
 		_, err := poller.PollAndProcessDecisionTask(false, false)
-		s.Logger.Infof("PollAndProcessDecisionTask: %v", err)
+		s.BarkLogger.Infof("PollAndProcessDecisionTask: %v", err)
 		s.Nil(err)
 		if i%2 == 0 {
 			err = poller.PollAndProcessActivityTask(false)
 		} else { // just for testing respondActivityTaskCompleteByID
 			err = poller.PollAndProcessActivityTaskWithID(false)
 		}
-		s.Logger.Infof("PollAndProcessActivityTask: %v", err)
+		s.BarkLogger.Infof("PollAndProcessActivityTask: %v", err)
 		s.Nil(err)
 	}
 
@@ -412,7 +412,7 @@ func (s *integrationSuite) TestCompleteDecisionTaskAndCreateNewOne() {
 	we, err0 := s.engine.StartWorkflowExecution(createContext(), request)
 	s.Nil(err0)
 
-	s.Logger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
+	s.BarkLogger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
 
 	decisionCount := 0
 	dtHandler := func(execution *workflow.WorkflowExecution, wt *workflow.WorkflowType,
@@ -443,7 +443,7 @@ func (s *integrationSuite) TestCompleteDecisionTaskAndCreateNewOne() {
 		StickyTaskList:  taskList,
 		Identity:        identity,
 		DecisionHandler: dtHandler,
-		Logger:          s.Logger,
+		Logger:          s.BarkLogger,
 		T:               s.T(),
 	}
 
@@ -489,7 +489,7 @@ func (s *integrationSuite) TestDecisionAndActivityTimeoutsWorkflow() {
 	we, err0 := s.engine.StartWorkflowExecution(createContext(), request)
 	s.Nil(err0)
 
-	s.Logger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
+	s.BarkLogger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
 
 	workflowComplete := false
 	activityCount := int32(4)
@@ -517,7 +517,7 @@ func (s *integrationSuite) TestDecisionAndActivityTimeoutsWorkflow() {
 			}}, nil
 		}
 
-		s.Logger.Info("Completing Workflow.")
+		s.BarkLogger.Info("Completing Workflow.")
 
 		workflowComplete = true
 		return []byte(strconv.Itoa(int(activityCounter))), []*workflow.Decision{{
@@ -532,7 +532,7 @@ func (s *integrationSuite) TestDecisionAndActivityTimeoutsWorkflow() {
 		activityID string, input []byte, taskToken []byte) ([]byte, bool, error) {
 		s.Equal(id, *execution.WorkflowId)
 		s.Equal(activityName, *activityType.Name)
-		s.Logger.Infof("Activity ID: %v", activityID)
+		s.BarkLogger.Infof("Activity ID: %v", activityID)
 		return []byte("Activity Result."), false, nil
 	}
 
@@ -543,13 +543,13 @@ func (s *integrationSuite) TestDecisionAndActivityTimeoutsWorkflow() {
 		Identity:        identity,
 		DecisionHandler: dtHandler,
 		ActivityHandler: atHandler,
-		Logger:          s.Logger,
+		Logger:          s.BarkLogger,
 		T:               s.T(),
 	}
 
 	for i := 0; i < 8; i++ {
 		dropDecisionTask := (i%2 == 0)
-		s.Logger.Infof("Calling Decision Task: %d", i)
+		s.BarkLogger.Infof("Calling Decision Task: %d", i)
 		var err error
 		if dropDecisionTask {
 			_, err = poller.PollAndProcessDecisionTask(true, true)
@@ -566,17 +566,17 @@ func (s *integrationSuite) TestDecisionAndActivityTimeoutsWorkflow() {
 			})
 			s.Nil(err)
 			history := historyResponse.History
-			common.PrettyPrintHistory(history, s.Logger)
+			common.PrettyPrintHistory(history, s.BarkLogger)
 		}
 		s.True(err == nil || err == matching.ErrNoTasks, "Error: %v", err)
 		if !dropDecisionTask {
-			s.Logger.Infof("Calling Activity Task: %d", i)
+			s.BarkLogger.Infof("Calling Activity Task: %d", i)
 			err = poller.PollAndProcessActivityTask(i%4 == 0)
 			s.True(err == nil || err == matching.ErrNoTasks)
 		}
 	}
 
-	s.Logger.Infof("Waiting for workflow to complete: RunId: %v", *we.RunId)
+	s.BarkLogger.Infof("Waiting for workflow to complete: RunId: %v", *we.RunId)
 
 	s.False(workflowComplete)
 	_, err := poller.PollAndProcessDecisionTask(true, false)
@@ -619,7 +619,7 @@ func (s *integrationSuite) TestWorkflowRetry() {
 	we, err0 := s.engine.StartWorkflowExecution(createContext(), request)
 	s.Nil(err0)
 
-	s.Logger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
+	s.BarkLogger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
 
 	var executions []*workflow.WorkflowExecution
 
@@ -654,7 +654,7 @@ func (s *integrationSuite) TestWorkflowRetry() {
 		TaskList:        taskList,
 		Identity:        identity,
 		DecisionHandler: dtHandler,
-		Logger:          s.Logger,
+		Logger:          s.BarkLogger,
 		T:               s.T(),
 	}
 
@@ -755,7 +755,7 @@ func (s *integrationSuite) TestWorkflowRetryFailures() {
 	we, err0 := s.engine.StartWorkflowExecution(createContext(), request)
 	s.Nil(err0)
 
-	s.Logger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
+	s.BarkLogger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
 
 	executions := []*workflow.WorkflowExecution{}
 	dtHandler := workflowImpl(5, "retryable-error", &executions)
@@ -765,7 +765,7 @@ func (s *integrationSuite) TestWorkflowRetryFailures() {
 		TaskList:        taskList,
 		Identity:        identity,
 		DecisionHandler: dtHandler,
-		Logger:          s.Logger,
+		Logger:          s.BarkLogger,
 		T:               s.T(),
 	}
 
@@ -811,7 +811,7 @@ func (s *integrationSuite) TestWorkflowRetryFailures() {
 	we, err0 = s.engine.StartWorkflowExecution(createContext(), request)
 	s.Nil(err0)
 
-	s.Logger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
+	s.BarkLogger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
 
 	executions = []*workflow.WorkflowExecution{}
 	dtHandler = workflowImpl(5, "bad-bug", &executions)
@@ -821,7 +821,7 @@ func (s *integrationSuite) TestWorkflowRetryFailures() {
 		TaskList:        taskList,
 		Identity:        identity,
 		DecisionHandler: dtHandler,
-		Logger:          s.Logger,
+		Logger:          s.BarkLogger,
 		T:               s.T(),
 	}
 
@@ -865,7 +865,7 @@ func (s *integrationSuite) TestCronWorkflow() {
 	we, err0 := s.engine.StartWorkflowExecution(createContext(), request)
 	s.Nil(err0)
 
-	s.Logger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
+	s.BarkLogger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
 
 	var executions []*workflow.WorkflowExecution
 
@@ -900,7 +900,7 @@ func (s *integrationSuite) TestCronWorkflow() {
 		TaskList:        taskList,
 		Identity:        identity,
 		DecisionHandler: dtHandler,
-		Logger:          s.Logger,
+		Logger:          s.BarkLogger,
 		T:               s.T(),
 	}
 
@@ -1026,7 +1026,7 @@ func (s *integrationSuite) TestSequential_UserTimers() {
 	we, err0 := s.engine.StartWorkflowExecution(createContext(), request)
 	s.Nil(err0)
 
-	s.Logger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
+	s.BarkLogger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
 
 	workflowComplete := false
 	timerCount := int32(4)
@@ -1062,13 +1062,13 @@ func (s *integrationSuite) TestSequential_UserTimers() {
 		Identity:        identity,
 		DecisionHandler: dtHandler,
 		ActivityHandler: nil,
-		Logger:          s.Logger,
+		Logger:          s.BarkLogger,
 		T:               s.T(),
 	}
 
 	for i := 0; i < 4; i++ {
 		_, err := poller.PollAndProcessDecisionTask(false, false)
-		s.Logger.Info("PollAndProcessDecisionTask: completed")
+		s.BarkLogger.Info("PollAndProcessDecisionTask: completed")
 		s.Nil(err)
 	}
 
@@ -1106,7 +1106,7 @@ func (s *integrationSuite) TestRateLimitBufferedEvents() {
 	we, err0 := s.engine.StartWorkflowExecution(createContext(), request)
 	s.Nil(err0)
 
-	s.Logger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
+	s.BarkLogger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
 	workflowExecution := &workflow.WorkflowExecution{
 		WorkflowId: common.StringPtr(id),
 		RunId:      common.StringPtr(*we.RunId),
@@ -1160,18 +1160,18 @@ func (s *integrationSuite) TestRateLimitBufferedEvents() {
 		Identity:        identity,
 		DecisionHandler: dtHandler,
 		ActivityHandler: nil,
-		Logger:          s.Logger,
+		Logger:          s.BarkLogger,
 		T:               s.T(),
 	}
 
 	// first decision to send 101 signals, the last signal will force fail decision and flush buffered events.
 	_, err := poller.PollAndProcessDecisionTask(false, false)
-	s.Logger.Infof("PollAndProcessDecisionTask: %v", err)
+	s.BarkLogger.Infof("PollAndProcessDecisionTask: %v", err)
 	s.EqualError(err, "EntityNotExistsError{Message: Decision task not found.}")
 
 	// Process signal in decider
 	_, err = poller.PollAndProcessDecisionTask(true, false)
-	s.Logger.Infof("PollAndProcessDecisionTask: %v", err)
+	s.BarkLogger.Infof("PollAndProcessDecisionTask: %v", err)
 	s.Nil(err)
 
 	s.printWorkflowHistory(s.domainName, workflowExecution)
@@ -1206,7 +1206,7 @@ func (s *integrationSuite) TestBufferedEvents() {
 	we, err0 := s.engine.StartWorkflowExecution(createContext(), request)
 	s.Nil(err0)
 
-	s.Logger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
+	s.BarkLogger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
 
 	// decider logic
 	workflowComplete := false
@@ -1266,13 +1266,13 @@ func (s *integrationSuite) TestBufferedEvents() {
 		Identity:        identity,
 		DecisionHandler: dtHandler,
 		ActivityHandler: nil,
-		Logger:          s.Logger,
+		Logger:          s.BarkLogger,
 		T:               s.T(),
 	}
 
 	// first decision, which sends signal and the signal event should be buffered to append after first decision closed
 	_, err := poller.PollAndProcessDecisionTask(false, false)
-	s.Logger.Infof("PollAndProcessDecisionTask: %v", err)
+	s.BarkLogger.Infof("PollAndProcessDecisionTask: %v", err)
 	s.Nil(err)
 
 	// check history, the signal event should be after the complete decision task
@@ -1292,7 +1292,7 @@ func (s *integrationSuite) TestBufferedEvents() {
 
 	// Process signal in decider
 	_, err = poller.PollAndProcessDecisionTask(true, false)
-	s.Logger.Infof("PollAndProcessDecisionTask: %v", err)
+	s.BarkLogger.Infof("PollAndProcessDecisionTask: %v", err)
 	s.Nil(err)
 	s.NotNil(signalEvent)
 	s.Equal(signalName, *signalEvent.WorkflowExecutionSignaledEventAttributes.SignalName)
@@ -1325,7 +1325,7 @@ func (s *integrationSuite) TestDescribeWorkflowExecution() {
 	we, err0 := s.engine.StartWorkflowExecution(createContext(), request)
 	s.Nil(err0)
 
-	s.Logger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
+	s.BarkLogger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
 
 	describeWorkflowExecution := func() (*workflow.DescribeWorkflowExecutionResponse, error) {
 		return s.engine.DescribeWorkflowExecution(createContext(), &workflow.DescribeWorkflowExecutionRequest{
@@ -1386,13 +1386,13 @@ func (s *integrationSuite) TestDescribeWorkflowExecution() {
 		Identity:        identity,
 		DecisionHandler: dtHandler,
 		ActivityHandler: atHandler,
-		Logger:          s.Logger,
+		Logger:          s.BarkLogger,
 		T:               s.T(),
 	}
 
 	// first decision to schedule new activity
 	_, err = poller.PollAndProcessDecisionTask(false, false)
-	s.Logger.Infof("PollAndProcessDecisionTask: %v", err)
+	s.BarkLogger.Infof("PollAndProcessDecisionTask: %v", err)
 	s.Nil(err)
 
 	dweResponse, err = describeWorkflowExecution()
@@ -1472,7 +1472,7 @@ func (s *integrationSuite) TestVisibility() {
 		Identity:        identity,
 		DecisionHandler: dtHandler,
 		ActivityHandler: nil,
-		Logger:          s.Logger,
+		Logger:          s.BarkLogger,
 		T:               s.T(),
 	}
 
@@ -1536,7 +1536,7 @@ func (s *integrationSuite) TestVisibility() {
 			historyLength = *(resp.Executions[0].HistoryLength)
 			break
 		}
-		s.Logger.Info("Closed WorkflowExecution is not yet visible")
+		s.BarkLogger.Info("Closed WorkflowExecution is not yet visible")
 		time.Sleep(100 * time.Millisecond)
 	}
 	s.Equal(1, closedCount)
@@ -1553,7 +1553,7 @@ func (s *integrationSuite) TestVisibility() {
 		if openCount == 1 {
 			break
 		}
-		s.Logger.Info("Open WorkflowExecution is not yet visible")
+		s.BarkLogger.Info("Open WorkflowExecution is not yet visible")
 		time.Sleep(100 * time.Millisecond)
 	}
 	s.Equal(1, openCount)
@@ -1594,7 +1594,7 @@ func (s *integrationSuite) TestChildWorkflowExecution() {
 
 	we, err0 := s.engine.StartWorkflowExecution(createContext(), request)
 	s.Nil(err0)
-	s.Logger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
+	s.BarkLogger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
 
 	// decider logic
 	childComplete := false
@@ -1606,11 +1606,11 @@ func (s *integrationSuite) TestChildWorkflowExecution() {
 	// Parent Decider Logic
 	dtHandlerParent := func(execution *workflow.WorkflowExecution, wt *workflow.WorkflowType,
 		previousStartedEventID, startedEventID int64, history *workflow.History) ([]byte, []*workflow.Decision, error) {
-		s.Logger.Infof("Processing decision task for WorkflowID: %v", *execution.WorkflowId)
+		s.BarkLogger.Infof("Processing decision task for WorkflowID: %v", *execution.WorkflowId)
 
 		if *execution.WorkflowId == parentID {
 			if !childExecutionStarted {
-				s.Logger.Info("Starting child execution.")
+				s.BarkLogger.Info("Starting child execution.")
 				childExecutionStarted = true
 				parentStartedEvent = history.Events[0]
 
@@ -1658,7 +1658,7 @@ func (s *integrationSuite) TestChildWorkflowExecution() {
 			childStartedEvent = history.Events[0]
 		}
 
-		s.Logger.Infof("Processing decision task for Child WorkflowID: %v", *execution.WorkflowId)
+		s.BarkLogger.Infof("Processing decision task for Child WorkflowID: %v", *execution.WorkflowId)
 		childComplete = true
 		return nil, []*workflow.Decision{{
 			DecisionType: common.DecisionTypePtr(workflow.DecisionTypeCompleteWorkflowExecution),
@@ -1674,7 +1674,7 @@ func (s *integrationSuite) TestChildWorkflowExecution() {
 		TaskList:        taskListParent,
 		Identity:        identity,
 		DecisionHandler: dtHandlerParent,
-		Logger:          s.Logger,
+		Logger:          s.BarkLogger,
 		T:               s.T(),
 	}
 
@@ -1684,13 +1684,13 @@ func (s *integrationSuite) TestChildWorkflowExecution() {
 		TaskList:        taskListChild,
 		Identity:        identity,
 		DecisionHandler: dtHandlerChild,
-		Logger:          s.Logger,
+		Logger:          s.BarkLogger,
 		T:               s.T(),
 	}
 
 	// Make first decision to start child execution
 	_, err := pollerParent.PollAndProcessDecisionTask(false, false)
-	s.Logger.Infof("PollAndProcessDecisionTask: %v", err)
+	s.BarkLogger.Infof("PollAndProcessDecisionTask: %v", err)
 	s.Nil(err)
 	s.True(childExecutionStarted)
 	s.Equal(workflow.ChildPolicyRequestCancel,
@@ -1698,11 +1698,11 @@ func (s *integrationSuite) TestChildWorkflowExecution() {
 
 	// Process ChildExecution Started event and Process Child Execution and complete it
 	_, err = pollerParent.PollAndProcessDecisionTask(false, false)
-	s.Logger.Infof("PollAndProcessDecisionTask: %v", err)
+	s.BarkLogger.Infof("PollAndProcessDecisionTask: %v", err)
 	s.Nil(err)
 
 	_, err = pollerChild.PollAndProcessDecisionTask(false, false)
-	s.Logger.Infof("PollAndProcessDecisionTask: %v", err)
+	s.BarkLogger.Infof("PollAndProcessDecisionTask: %v", err)
 	s.Nil(err)
 	s.NotNil(startedEvent)
 	s.True(childComplete)
@@ -1717,7 +1717,7 @@ func (s *integrationSuite) TestChildWorkflowExecution() {
 
 	// Process ChildExecution completed event and complete parent execution
 	_, err = pollerParent.PollAndProcessDecisionTask(false, false)
-	s.Logger.Infof("PollAndProcessDecisionTask: %v", err)
+	s.BarkLogger.Infof("PollAndProcessDecisionTask: %v", err)
 	s.Nil(err)
 	s.NotNil(completedEvent)
 	completedAttributes := completedEvent.ChildWorkflowExecutionCompletedEventAttributes
@@ -1726,13 +1726,13 @@ func (s *integrationSuite) TestChildWorkflowExecution() {
 	s.Equal(wtChild, *completedAttributes.WorkflowType.Name)
 	s.Equal([]byte("Child Done."), completedAttributes.Result)
 
-	s.Logger.Info("Parent Workflow Execution History: ")
+	s.BarkLogger.Info("Parent Workflow Execution History: ")
 	s.printWorkflowHistory(s.domainName, &workflow.WorkflowExecution{
 		WorkflowId: common.StringPtr(parentID),
 		RunId:      common.StringPtr(*we.RunId),
 	})
 
-	s.Logger.Info("Child Workflow Execution History: ")
+	s.BarkLogger.Info("Child Workflow Execution History: ")
 	s.printWorkflowHistory(s.domainName,
 		startedEvent.ChildWorkflowExecutionStartedEventAttributes.WorkflowExecution)
 }
@@ -1777,7 +1777,7 @@ func (s *integrationSuite) TestCronChildWorkflowExecution() {
 	startParentWorkflowTS := time.Now()
 	we, err0 := s.engine.StartWorkflowExecution(createContext(), request)
 	s.Nil(err0)
-	s.Logger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
+	s.BarkLogger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
 
 	// decider logic
 	childExecutionStarted := false
@@ -1787,10 +1787,10 @@ func (s *integrationSuite) TestCronChildWorkflowExecution() {
 	// Parent Decider Logic
 	dtHandlerParent := func(execution *workflow.WorkflowExecution, wt *workflow.WorkflowType,
 		previousStartedEventID, startedEventID int64, history *workflow.History) ([]byte, []*workflow.Decision, error) {
-		s.Logger.Infof("Processing decision task for WorkflowID: %v", *execution.WorkflowId)
+		s.BarkLogger.Infof("Processing decision task for WorkflowID: %v", *execution.WorkflowId)
 
 		if !childExecutionStarted {
-			s.Logger.Info("Starting child execution.")
+			s.BarkLogger.Info("Starting child execution.")
 			childExecutionStarted = true
 			parentStartedEvent = history.Events[0]
 			startChildWorkflowTS = time.Now()
@@ -1827,7 +1827,7 @@ func (s *integrationSuite) TestCronChildWorkflowExecution() {
 	dtHandlerChild := func(execution *workflow.WorkflowExecution, wt *workflow.WorkflowType,
 		previousStartedEventID, startedEventID int64, history *workflow.History) ([]byte, []*workflow.Decision, error) {
 
-		s.Logger.Infof("Processing decision task for Child WorkflowID: %v", *execution.WorkflowId)
+		s.BarkLogger.Infof("Processing decision task for Child WorkflowID: %v", *execution.WorkflowId)
 		return nil, []*workflow.Decision{{
 			DecisionType: common.DecisionTypePtr(workflow.DecisionTypeCompleteWorkflowExecution),
 			CompleteWorkflowExecutionDecisionAttributes: &workflow.CompleteWorkflowExecutionDecisionAttributes{},
@@ -1840,7 +1840,7 @@ func (s *integrationSuite) TestCronChildWorkflowExecution() {
 		TaskList:        taskListParent,
 		Identity:        identity,
 		DecisionHandler: dtHandlerParent,
-		Logger:          s.Logger,
+		Logger:          s.BarkLogger,
 		T:               s.T(),
 	}
 
@@ -1850,13 +1850,13 @@ func (s *integrationSuite) TestCronChildWorkflowExecution() {
 		TaskList:        taskListChild,
 		Identity:        identity,
 		DecisionHandler: dtHandlerChild,
-		Logger:          s.Logger,
+		Logger:          s.BarkLogger,
 		T:               s.T(),
 	}
 
 	// Make first decision to start child execution
 	_, err := pollerParent.PollAndProcessDecisionTask(false, false)
-	s.Logger.Infof("PollAndProcessDecisionTask: %v", err)
+	s.BarkLogger.Infof("PollAndProcessDecisionTask: %v", err)
 	s.Nil(err)
 	s.True(childExecutionStarted)
 	s.Equal(workflow.ChildPolicyRequestCancel,
@@ -1864,7 +1864,7 @@ func (s *integrationSuite) TestCronChildWorkflowExecution() {
 
 	// Process ChildExecution Started event
 	_, err = pollerParent.PollAndProcessDecisionTask(false, false)
-	s.Logger.Infof("PollAndProcessDecisionTask: %v", err)
+	s.BarkLogger.Infof("PollAndProcessDecisionTask: %v", err)
 	s.Nil(err)
 
 	startFilter := &workflow.StartTimeFilter{}
@@ -1889,7 +1889,7 @@ func (s *integrationSuite) TestCronChildWorkflowExecution() {
 		s.Equal(targetBackoffDuration.Nanoseconds(), executionInfo.GetExecutionTime()-executionInfo.GetStartTime())
 
 		_, err = pollerChild.PollAndProcessDecisionTask(false, false)
-		s.Logger.Infof("PollAndProcessDecisionTask: %v", err)
+		s.BarkLogger.Infof("PollAndProcessDecisionTask: %v", err)
 		s.Nil(err)
 
 		backoffDuration := time.Now().Sub(startChildWorkflowTS)
@@ -1909,7 +1909,7 @@ func (s *integrationSuite) TestCronChildWorkflowExecution() {
 
 	// Process ChildExecution terminated event and complete parent execution
 	_, err = pollerParent.PollAndProcessDecisionTask(false, false)
-	s.Logger.Infof("PollAndProcessDecisionTask: %v", err)
+	s.BarkLogger.Infof("PollAndProcessDecisionTask: %v", err)
 	s.Nil(err)
 	s.NotNil(terminatedEvent)
 	terminatedAttributes := terminatedEvent.ChildWorkflowExecutionTerminatedEventAttributes
@@ -1973,7 +1973,7 @@ func (s *integrationSuite) TestWorkflowTimeout() {
 	we, err0 := s.engine.StartWorkflowExecution(createContext(), request)
 	s.Nil(err0)
 
-	s.Logger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
+	s.BarkLogger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
 
 	workflowComplete := false
 
@@ -1988,11 +1988,11 @@ GetHistoryLoop:
 		})
 		s.Nil(err)
 		history := historyResponse.History
-		common.PrettyPrintHistory(history, s.Logger)
+		common.PrettyPrintHistory(history, s.BarkLogger)
 
 		lastEvent := history.Events[len(history.Events)-1]
 		if *lastEvent.EventType != workflow.EventTypeWorkflowExecutionTimedOut {
-			s.Logger.Warnf("Execution not timedout yet.")
+			s.BarkLogger.Warnf("Execution not timedout yet.")
 			time.Sleep(200 * time.Millisecond)
 			continue GetHistoryLoop
 		}
@@ -2019,7 +2019,7 @@ ListClosedLoop:
 		s.Nil(err3)
 		closedCount = len(resp.Executions)
 		if closedCount == 0 {
-			s.Logger.Info("Closed WorkflowExecution is not yet visibile")
+			s.BarkLogger.Info("Closed WorkflowExecution is not yet visibile")
 			time.Sleep(1000 * time.Millisecond)
 			continue ListClosedLoop
 		}
@@ -2056,7 +2056,7 @@ func (s *integrationSuite) TestDecisionTaskFailed() {
 
 	we, err0 := s.engine.StartWorkflowExecution(createContext(), request)
 	s.Nil(err0)
-	s.Logger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
+	s.BarkLogger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
 
 	workflowExecution := &workflow.WorkflowExecution{
 		WorkflowId: common.StringPtr(id),
@@ -2119,7 +2119,7 @@ func (s *integrationSuite) TestDecisionTaskFailed() {
 
 		workflowComplete = true
 		time.Sleep(time.Second)
-		s.Logger.Warnf("PrevStarted: %v, StartedEventID: %v, Size: %v", previousStartedEventID, startedEventID,
+		s.BarkLogger.Warnf("PrevStarted: %v, StartedEventID: %v, Size: %v", previousStartedEventID, startedEventID,
 			len(history.Events))
 		lastDecisionEvent := history.Events[startedEventID-1]
 		s.Equal(workflow.EventTypeDecisionTaskStarted, lastDecisionEvent.GetEventType())
@@ -2146,18 +2146,18 @@ func (s *integrationSuite) TestDecisionTaskFailed() {
 		Identity:        identity,
 		DecisionHandler: dtHandler,
 		ActivityHandler: atHandler,
-		Logger:          s.Logger,
+		Logger:          s.BarkLogger,
 		T:               s.T(),
 	}
 
 	// Make first decision to schedule activity
 	_, err := poller.PollAndProcessDecisionTask(false, false)
-	s.Logger.Infof("PollAndProcessDecisionTask: %v", err)
+	s.BarkLogger.Infof("PollAndProcessDecisionTask: %v", err)
 	s.Nil(err)
 
 	// process activity
 	err = poller.PollAndProcessActivityTask(false)
-	s.Logger.Infof("PollAndProcessActivityTask: %v", err)
+	s.BarkLogger.Infof("PollAndProcessActivityTask: %v", err)
 	s.Nil(err)
 
 	// fail decision 5 times
@@ -2171,7 +2171,7 @@ func (s *integrationSuite) TestDecisionTaskFailed() {
 
 	// process signal
 	_, err = poller.PollAndProcessDecisionTask(true, false)
-	s.Logger.Infof("PollAndProcessDecisionTask: %v", err)
+	s.BarkLogger.Infof("PollAndProcessDecisionTask: %v", err)
 	s.Nil(err)
 	s.Equal(1, signalCount)
 
@@ -2201,7 +2201,7 @@ func (s *integrationSuite) TestDecisionTaskFailed() {
 
 	// Make complete workflow decision
 	_, err = poller.PollAndProcessDecisionTaskWithAttempt(true, false, false, false, int64(2))
-	s.Logger.Infof("pollAndProcessDecisionTask: %v", err)
+	s.BarkLogger.Infof("pollAndProcessDecisionTask: %v", err)
 	s.Nil(err)
 	s.True(workflowComplete)
 	s.Equal(16, signalCount)
@@ -2220,7 +2220,7 @@ func (s *integrationSuite) TestDecisionTaskFailed() {
 		lastEvent = e
 	}
 	s.Equal(workflow.EventTypeWorkflowExecutionCompleted, lastEvent.GetEventType())
-	s.Logger.Infof("Last Decision Time: %v, Last Decision History Timestamp: %v, Complete Timestamp: %v",
+	s.BarkLogger.Infof("Last Decision Time: %v, Last Decision History Timestamp: %v, Complete Timestamp: %v",
 		time.Unix(0, lastDecisionTimestamp), time.Unix(0, lastDecisionStartedEvent.GetTimestamp()),
 		time.Unix(0, lastEvent.GetTimestamp()))
 	s.Equal(lastDecisionTimestamp, lastDecisionStartedEvent.GetTimestamp())
@@ -2262,7 +2262,7 @@ func (s *integrationSuite) TestDescribeTaskList() {
 	we, err0 := s.engine.StartWorkflowExecution(createContext(), request)
 	s.Nil(err0)
 
-	s.Logger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
+	s.BarkLogger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
 
 	// decider logic
 	activityScheduled := false
@@ -2311,7 +2311,7 @@ func (s *integrationSuite) TestDescribeTaskList() {
 		Identity:        identity,
 		DecisionHandler: dtHandler,
 		ActivityHandler: atHandler,
-		Logger:          s.Logger,
+		Logger:          s.BarkLogger,
 		T:               s.T(),
 	}
 
@@ -2386,7 +2386,7 @@ func (s *integrationSuite) TestTransientDecisionTimeout() {
 
 	we, err0 := s.engine.StartWorkflowExecution(createContext(), request)
 	s.Nil(err0)
-	s.Logger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
+	s.BarkLogger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
 
 	workflowExecution := &workflow.WorkflowExecution{
 		WorkflowId: common.StringPtr(id),
@@ -2428,13 +2428,13 @@ func (s *integrationSuite) TestTransientDecisionTimeout() {
 		Identity:        identity,
 		DecisionHandler: dtHandler,
 		ActivityHandler: nil,
-		Logger:          s.Logger,
+		Logger:          s.BarkLogger,
 		T:               s.T(),
 	}
 
 	// First decision immediately fails and schedules a transient decision
 	_, err := poller.PollAndProcessDecisionTask(false, false)
-	s.Logger.Infof("PollAndProcessDecisionTask: %v", err)
+	s.BarkLogger.Infof("PollAndProcessDecisionTask: %v", err)
 	s.Nil(err)
 
 	// Now send a signal when transient decision is scheduled
@@ -2443,7 +2443,7 @@ func (s *integrationSuite) TestTransientDecisionTimeout() {
 
 	// Drop decision task to cause a Decision Timeout
 	_, err = poller.PollAndProcessDecisionTask(true, true)
-	s.Logger.Infof("PollAndProcessDecisionTask: %v", err)
+	s.BarkLogger.Infof("PollAndProcessDecisionTask: %v", err)
 	s.Nil(err)
 
 	// Print history after dropping decision
@@ -2454,7 +2454,7 @@ func (s *integrationSuite) TestTransientDecisionTimeout() {
 
 	// Now process signal and complete workflow execution
 	_, err = poller.PollAndProcessDecisionTaskWithAttempt(true, false, false, false, int64(1))
-	s.Logger.Infof("PollAndProcessDecisionTask: %v", err)
+	s.BarkLogger.Infof("PollAndProcessDecisionTask: %v", err)
 	s.Nil(err)
 
 	s.Equal(1, signalCount)
@@ -2486,7 +2486,7 @@ func (s *integrationSuite) TestNoTransientDecisionAfterFlushBufferedEvents() {
 	we, err0 := s.engine.StartWorkflowExecution(createContext(), request)
 	s.Nil(err0)
 
-	s.Logger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
+	s.BarkLogger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
 
 	// decider logic
 	workflowComplete := false
@@ -2536,20 +2536,20 @@ func (s *integrationSuite) TestNoTransientDecisionAfterFlushBufferedEvents() {
 		TaskList:        taskList,
 		Identity:        identity,
 		DecisionHandler: dtHandler,
-		Logger:          s.Logger,
+		Logger:          s.BarkLogger,
 		T:               s.T(),
 	}
 
 	// fist decision, this try to do a continue as new but there is a buffered event,
 	// so it will fail and create a new decision
 	_, err := poller.PollAndProcessDecisionTask(true, false)
-	s.Logger.Infof("pollAndProcessDecisionTask: %v", err)
+	s.BarkLogger.Infof("pollAndProcessDecisionTask: %v", err)
 	s.Nil(err)
 
 	// second decision, which will complete the workflow
 	// this expect the decision to have attempt == 0
 	_, err = poller.PollAndProcessDecisionTaskWithAttempt(true, false, false, false, 0)
-	s.Logger.Infof("pollAndProcessDecisionTask: %v", err)
+	s.BarkLogger.Infof("pollAndProcessDecisionTask: %v", err)
 	s.Nil(err)
 
 	s.True(workflowComplete)
@@ -2582,7 +2582,7 @@ func (s *integrationSuite) TestRelayDecisionTimeout() {
 
 	we, err0 := s.engine.StartWorkflowExecution(createContext(), request)
 	s.Nil(err0)
-	s.Logger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
+	s.BarkLogger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
 
 	workflowExecution := &workflow.WorkflowExecution{
 		WorkflowId: common.StringPtr(id),
@@ -2615,13 +2615,13 @@ func (s *integrationSuite) TestRelayDecisionTimeout() {
 		Identity:        identity,
 		DecisionHandler: dtHandler,
 		ActivityHandler: nil,
-		Logger:          s.Logger,
+		Logger:          s.BarkLogger,
 		T:               s.T(),
 	}
 
 	// First decision task complete with a marker decision, and request to relay decision (immediately return a new decision task)
 	_, newTask, err := poller.PollAndProcessDecisionTaskWithAttemptAndRetryAndForceNewDecision(false, false, false, false, 0, 3, true)
-	s.Logger.Infof("PollAndProcessDecisionTask: %v", err)
+	s.BarkLogger.Infof("PollAndProcessDecisionTask: %v", err)
 	s.Nil(err)
 	s.NotNil(newTask)
 	s.NotNil(newTask.DecisionTask)
@@ -2644,7 +2644,7 @@ func (s *integrationSuite) TestRelayDecisionTimeout() {
 
 	// Now complete workflow
 	_, err = poller.PollAndProcessDecisionTaskWithAttempt(true, false, false, false, int64(1))
-	s.Logger.Infof("PollAndProcessDecisionTask: %v", err)
+	s.BarkLogger.Infof("PollAndProcessDecisionTask: %v", err)
 	s.Nil(err)
 
 	s.True(workflowComplete)
@@ -2678,7 +2678,7 @@ func (s *integrationSuite) TestTaskProcessingProtectionForRateLimitError() {
 	we, err0 := s.engine.StartWorkflowExecution(createContext(), request)
 	s.Nil(err0)
 
-	s.Logger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
+	s.BarkLogger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
 	workflowExecution := &workflow.WorkflowExecution{
 		WorkflowId: common.StringPtr(id),
 		RunId:      common.StringPtr(*we.RunId),
@@ -2726,13 +2726,13 @@ func (s *integrationSuite) TestTaskProcessingProtectionForRateLimitError() {
 		Identity:        identity,
 		DecisionHandler: dtHandler,
 		ActivityHandler: nil,
-		Logger:          s.Logger,
+		Logger:          s.BarkLogger,
 		T:               s.T(),
 	}
 
 	// Process first decision to create user timer
 	_, err := poller.PollAndProcessDecisionTask(false, false)
-	s.Logger.Infof("PollAndProcessDecisionTask: %v", err)
+	s.BarkLogger.Infof("PollAndProcessDecisionTask: %v", err)
 	s.Nil(err)
 
 	// Send one signal to create a new decision
@@ -2742,7 +2742,7 @@ func (s *integrationSuite) TestTaskProcessingProtectionForRateLimitError() {
 
 	// Drop decision to cause all events to be buffered from now on
 	_, err = poller.PollAndProcessDecisionTask(false, true)
-	s.Logger.Infof("PollAndProcessDecisionTask: %v", err)
+	s.BarkLogger.Infof("PollAndProcessDecisionTask: %v", err)
 	s.Nil(err)
 
 	// Buffered 100 Signals
@@ -2760,7 +2760,7 @@ func (s *integrationSuite) TestTaskProcessingProtectionForRateLimitError() {
 
 	// Process signal in decider
 	_, err = poller.PollAndProcessDecisionTaskWithAttempt(true, false, false, false, 0)
-	s.Logger.Infof("pollAndProcessDecisionTask: %v", err)
+	s.BarkLogger.Infof("pollAndProcessDecisionTask: %v", err)
 	s.Nil(err)
 
 	s.printWorkflowHistory(s.domainName, workflowExecution)
@@ -2802,7 +2802,7 @@ func (s *integrationSuite) TestStickyTimeout_NonTransientDecision() {
 	we, err0 := s.engine.StartWorkflowExecution(createContext(), request)
 	s.Nil(err0)
 
-	s.Logger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
+	s.BarkLogger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
 	workflowExecution := &workflow.WorkflowExecution{
 		WorkflowId: common.StringPtr(id),
 		RunId:      we.RunId,
@@ -2857,14 +2857,14 @@ func (s *integrationSuite) TestStickyTimeout_NonTransientDecision() {
 		TaskList:                            taskList,
 		Identity:                            identity,
 		DecisionHandler:                     dtHandler,
-		Logger:                              s.Logger,
+		Logger:                              s.BarkLogger,
 		T:                                   s.T(),
 		StickyTaskList:                      stickyTaskList,
 		StickyScheduleToStartTimeoutSeconds: stickyScheduleToStartTimeoutSeconds,
 	}
 
 	_, err := poller.PollAndProcessDecisionTaskWithAttempt(false, false, false, true, int64(0))
-	s.Logger.Infof("PollAndProcessDecisionTask: %v", err)
+	s.BarkLogger.Infof("PollAndProcessDecisionTask: %v", err)
 	s.Nil(err)
 
 	err = s.engine.SignalWorkflowExecution(createContext(), &workflow.SignalWorkflowExecutionRequest{
@@ -2894,7 +2894,7 @@ WaitForStickyTimeoutLoop:
 
 	for i := 0; i < 3; i++ {
 		_, err = poller.PollAndProcessDecisionTaskWithAttempt(true, false, false, true, int64(i))
-		s.Logger.Infof("PollAndProcessDecisionTask: %v", err)
+		s.BarkLogger.Infof("PollAndProcessDecisionTask: %v", err)
 		s.Nil(err)
 	}
 
@@ -2910,7 +2910,7 @@ WaitForStickyTimeoutLoop:
 
 	for i := 0; i < 2; i++ {
 		_, err = poller.PollAndProcessDecisionTaskWithAttempt(true, false, false, true, int64(i))
-		s.Logger.Infof("PollAndProcessDecisionTask: %v", err)
+		s.BarkLogger.Infof("PollAndProcessDecisionTask: %v", err)
 		s.Nil(err)
 	}
 
@@ -2969,7 +2969,7 @@ func (s *integrationSuite) TestBufferedEventsOutOfOrder() {
 	we, err0 := s.engine.StartWorkflowExecution(createContext(), request)
 	s.Nil(err0)
 
-	s.Logger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
+	s.BarkLogger.Infof("StartWorkflowExecution: response: %v \n", *we.RunId)
 	workflowExecution := &workflow.WorkflowExecution{
 		WorkflowId: common.StringPtr(id),
 		RunId:      we.RunId,
@@ -2982,7 +2982,7 @@ func (s *integrationSuite) TestBufferedEventsOutOfOrder() {
 	dtHandler := func(execution *workflow.WorkflowExecution, wt *workflow.WorkflowType,
 		previousStartedEventID, startedEventID int64, history *workflow.History) ([]byte, []*workflow.Decision, error) {
 
-		s.Logger.Infof("Decider called: first: %v, second: %v, complete: %v\n", firstDecision, secondDecision, workflowComplete)
+		s.BarkLogger.Infof("Decider called: first: %v, second: %v, complete: %v\n", firstDecision, secondDecision, workflowComplete)
 
 		if !firstDecision {
 			firstDecision = true
@@ -3040,25 +3040,25 @@ func (s *integrationSuite) TestBufferedEventsOutOfOrder() {
 		Identity:        identity,
 		DecisionHandler: dtHandler,
 		ActivityHandler: atHandler,
-		Logger:          s.Logger,
+		Logger:          s.BarkLogger,
 		T:               s.T(),
 	}
 
 	// first decision, which will schedule an activity and add marker
 	_, task, err := poller.PollAndProcessDecisionTaskWithAttemptAndRetryAndForceNewDecision(true, false, false, false, int64(0), 1, true)
-	s.Logger.Infof("pollAndProcessDecisionTask: %v", err)
+	s.BarkLogger.Infof("pollAndProcessDecisionTask: %v", err)
 	s.Nil(err)
 
 	// This will cause activity start and complete to be buffered
 	err = poller.PollAndProcessActivityTask(false)
-	s.Logger.Infof("pollAndProcessActivityTask: %v", err)
+	s.BarkLogger.Infof("pollAndProcessActivityTask: %v", err)
 	s.Nil(err)
 
 	// second decision, completes another local activity and forces flush of buffered activity events
 	newDecisionTask := task.GetDecisionTask()
 	s.NotNil(newDecisionTask)
 	task, err = poller.HandlePartialDecision(newDecisionTask)
-	s.Logger.Infof("pollAndProcessDecisionTask: %v", err)
+	s.BarkLogger.Infof("pollAndProcessDecisionTask: %v", err)
 	s.Nil(err)
 	s.NotNil(task)
 
@@ -3066,7 +3066,7 @@ func (s *integrationSuite) TestBufferedEventsOutOfOrder() {
 	newDecisionTask = task.GetDecisionTask()
 	s.NotNil(newDecisionTask)
 	task, err = poller.HandlePartialDecision(newDecisionTask)
-	s.Logger.Infof("pollAndProcessDecisionTask: %v", err)
+	s.BarkLogger.Infof("pollAndProcessDecisionTask: %v", err)
 	s.Nil(err)
 	s.Nil(task.DecisionTask)
 

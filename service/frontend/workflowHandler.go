@@ -395,6 +395,9 @@ func (wh *WorkflowHandler) ListDomains(ctx context.Context,
 // DescribeDomain returns the information and configuration for a registered domain.
 func (wh *WorkflowHandler) DescribeDomain(ctx context.Context,
 	describeRequest *gen.DescribeDomainRequest) (response *gen.DescribeDomainResponse, retError error) {
+	wh.GetLogger().WithFields(bark.Fields{
+		"domain": describeRequest.GetName(),
+	}).Info("ANDREW CALLED DESCRIBE DOMAIN 1")
 	defer logging.CapturePanic(wh.GetLogger(), &retError)
 	scope := wh.metricsClient.Scope(metrics.FrontendDescribeDomainScope)
 	sw := wh.startRequestProfile(scope)
@@ -413,6 +416,11 @@ func (wh *WorkflowHandler) DescribeDomain(ctx context.Context,
 		Name: describeRequest.GetName(),
 		ID:   describeRequest.GetUUID(),
 	}
+
+	wh.GetLogger().WithFields(bark.Fields{
+		"domain": describeRequest.GetName(),
+	}).Info("ANDREW CALLED DESCRIBE DOMAIN 2")
+
 	resp, err := wh.metadataMgr.GetDomain(req)
 	if err != nil {
 		return nil, wh.error(err, scope)
@@ -422,6 +430,9 @@ func (wh *WorkflowHandler) DescribeDomain(ctx context.Context,
 		IsGlobalDomain:  common.BoolPtr(resp.IsGlobalDomain),
 		FailoverVersion: common.Int64Ptr(resp.FailoverVersion),
 	}
+	wh.GetLogger().WithFields(bark.Fields{
+		"domain": describeRequest.GetName(),
+	}).Info("ANDREW CALLED DESCRIBE DOMAIN 3")
 	response.DomainInfo, response.Configuration, response.ReplicationConfiguration = wh.createDomainResponse(
 		resp.Info, resp.Config, resp.ReplicationConfig)
 
@@ -3206,6 +3217,9 @@ func getDomainStatus(info *persistence.DomainInfo) *gen.DomainStatus {
 func (wh *WorkflowHandler) createDomainResponse(info *persistence.DomainInfo, config *persistence.DomainConfig,
 	replicationConfig *persistence.DomainReplicationConfig) (*gen.DomainInfo,
 	*gen.DomainConfiguration, *gen.DomainReplicationConfiguration) {
+	wh.GetLogger().WithFields(bark.Fields{
+		"domain": info.Name,
+	}).Info("ANDREW CALLED CREATE DOMAIN RESPONSE 1")
 
 	infoResult := &gen.DomainInfo{
 		Name:        common.StringPtr(info.Name),
@@ -3222,11 +3236,32 @@ func (wh *WorkflowHandler) createDomainResponse(info *persistence.DomainInfo, co
 		ArchivalStatus:                         common.ArchivalStatusPtr(config.ArchivalStatus),
 		ArchivalBucketName:                     common.StringPtr(config.ArchivalBucket),
 	}
+
+	wh.GetLogger().WithFields(bark.Fields{
+		"domain": info.Name,
+		"archival_config_nil": wh.GetClusterMetadata().ArchivalConfig() == nil,
+		"configured_for_archival": wh.GetClusterMetadata().ArchivalConfig().ConfiguredForArchival(),
+		"bucket": config.ArchivalBucket,
+	}).Info("ANDREW CALLED CREATE DOMAIN RESPONSE 2")
 	if wh.GetClusterMetadata().ArchivalConfig().ConfiguredForArchival() && config.ArchivalBucket != "" {
+		wh.GetLogger().WithFields(bark.Fields{
+			"domain": info.Name,
+		}).Info("ANDREW CALLED CREATE DOMAIN RESPONSE 3")
 		metadata, err := wh.blobstoreClient.BucketMetadata(context.Background(), config.ArchivalBucket)
+		wh.GetLogger().WithFields(bark.Fields{
+			"domain": info.Name,
+		}).Info("ANDREW CALLED CREATE DOMAIN RESPONSE 4")
 		if err == nil {
+			wh.GetLogger().WithFields(bark.Fields{
+				"domain": info.Name,
+			}).Info("ANDREW CALLED CREATE DOMAIN RESPONSE 5")
 			configResult.ArchivalRetentionPeriodInDays = common.Int32Ptr(int32(metadata.RetentionDays))
 			configResult.ArchivalBucketOwner = common.StringPtr(metadata.Owner)
+		} else {
+			wh.GetLogger().WithFields(bark.Fields{
+				"domain": info.Name,
+				"err": err,
+			}).Info("ANDREW CALLED CREATE DOMAIN RESPONSE 6")
 		}
 	}
 
